@@ -1,0 +1,17 @@
+in a
+in b
+ld a
+cmp b
+jeq endausgabe
+jgt agroesserb
+jlt bgroessera
+sub b :agroesserb
+st a
+jmp #3
+ld b :bgroessera
+sub a
+st b
+jmp #3
+st h :endausgabe
+out h
+end
