@@ -1,0 +1,30 @@
+ld 2
+st b
+;erwarte die zu prüfende Zahl
+in a
+;Schleife hier
+ld a
+mod b
+cmp 0
+jeq notprime
+
+ld b
+add 1
+st b
+
+ld b
+mul b
+cmp a
+jgt prime
+
+jmp loop
+
+:not_prime
+out 0
+jmp to_end
+
+:prime
+out 1
+
+:to_end
+end
