@@ -1,0 +1,35 @@
+; m = Speicher d
+; ansonsten normal
+; acm Formel zum
+;finden von Zufallszahlen
+
+; acm Zahlen in
+; den Speicher legen
+; x wird in h gelegt
+ld 157
+st a
+ld 3
+st c
+ld 256
+st d
+ld 0 ;beginne mit 0
+st h
+
+; hier wird geloopt
+in g ;nur damit gewartet wird
+ld h
+add 1
+st h
+
+ld a
+mul h
+add c
+st f
+mod f
+mul f
+
+st h
+out h
+jmp #16
+
+end
