@@ -16,8 +16,8 @@ ld 0 ;beginne mit 0
 st h
 
 ; hier wird geloopt
-in g ;nur damit gewartet wird
-ld h
+
+ld h :loop
 add 1
 st h
 
@@ -30,6 +30,6 @@ mul f
 
 st h
 out h
-jmp #16
+jmp loop
 
 end
