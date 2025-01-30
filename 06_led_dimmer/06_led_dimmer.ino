@@ -1,3 +1,16 @@
+#define no_debug_print                                               // manages most of the print and println debug, not all but most
+
+#if defined debug_print
+   #define debug_begin(x)        Serial.begin(x)
+   #define debug(x)                   Serial.print(x)
+   #define debugln(x)                 Serial.println(x)
+#else
+   #define debug_begin(x)
+   #define debug(x)
+   #define debugln(x)
+#endif
+
+
 const int led_upperEnd = 2;
 const int led_dimm = 3;
 const int led_lowerEnd = 4;
@@ -10,7 +23,7 @@ bool dimmer_is_rising = true;
 int buttonState = 0;
 
 void setup() {
-  Serial.begin(9600);
+  debug_begin(9600);
 
   pinMode(led_upperEnd, OUTPUT);
   pinMode(led_dimm, OUTPUT);
@@ -21,7 +34,7 @@ void setup() {
 void loop() {
   buttonState = !digitalRead(button1);
 
-  Serial.println("Button " + String(buttonState) + " / Led Power " + String(dimm_led_power));
+  debugln("Button " + String(buttonState) + " / Led Power " + String(dimm_led_power));
 
   // Prüfe, ob der Button gedrückt ist
   if (buttonState == HIGH) {  
@@ -39,13 +52,13 @@ void loop() {
   }
 
   analogWrite(led_dimm, dimm_led_power);  // Korrigiert: LED dimmen mit PWM
-  if(dimm_led_power == dimm_minVal){
+  if(dimm_led_power <= dimm_minVal){
     digitalWrite(led_lowerEnd, HIGH);
     delay(1000);
   }else{
     digitalWrite(led_lowerEnd, LOW);
   }
-  if(dimm_led_power == dimm_maxVal){
+  if(dimm_led_power >= dimm_maxVal){
     digitalWrite(led_upperEnd, HIGH);
     delay(1000);
   }else{
