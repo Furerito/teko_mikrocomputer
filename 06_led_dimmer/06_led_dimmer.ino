@@ -31,6 +31,10 @@ void setup() {
   pinMode(button1, INPUT_PULLUP);
 }
 
+// Die Helligkeit der LED ändert nach oben oder unten, solange der Knopf gedrückt wird
+// Am unteren Limit leuchtet die "led_lowerEnd"
+// Am oberen Limit leuchtet die "led_upperEnd"
+
 void loop() {
   buttonState = !digitalRead(button1);
 
