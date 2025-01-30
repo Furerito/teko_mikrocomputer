@@ -36,7 +36,8 @@ void loop() {
 
   debugln("Button " + String(buttonState) + " / Led Power " + String(dimm_led_power));
 
-  // Prüfe, ob der Button gedrückt ist
+  // HALT STOPP!
+  // Prüfe, ob der Button gedrückt ist, sonst unternehme ich nix
   if (buttonState == HIGH) {  
     if (dimmer_is_rising && dimm_led_power < dimm_maxVal) {
       dimm_led_power++;
@@ -51,7 +52,8 @@ void loop() {
     }
   }
 
-  analogWrite(led_dimm, dimm_led_power);  // Korrigiert: LED dimmen mit PWM
+  // LED dimmen mit PWM
+  analogWrite(led_dimm, dimm_led_power);  
   if(dimm_led_power <= dimm_minVal){
     digitalWrite(led_lowerEnd, HIGH);
     delay(1000);
@@ -64,5 +66,8 @@ void loop() {
   }else{
     digitalWrite(led_upperEnd, LOW);
   }
-  delay(10); // Kleiner Delay, um das Dimmen sanfter zu machen
+
+  // Kleiner Delay, um das Dimmen sanfter zu machen
+  // Geht am besten, wenn debug_print nicht aktiv ist
+  delay(10); 
 }
