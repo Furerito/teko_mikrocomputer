@@ -1,0 +1,151 @@
+#include <SPI.h>
+#include <IRremote.h>
+
+#define DATA_PIN 11  
+#define CLOCK_PIN 13  
+#define NUM_LEDS 25  
+#define IR_PIN 2  // IR-Empfänger an Pin D2
+
+IRrecv irrecv(IR_PIN);
+
+// IR-Codes (ersetze diese mit deinen eigenen Werten!)
+#define IR_UP    0xB946FF00
+#define IR_DOWN  0xEA15FF00
+#define IR_LEFT  0xBB44FF00
+#define IR_RIGHT 0xBC43FF00
+
+byte ledBuffer[NUM_LEDS * 3];
+byte foodPosition[2] = {3, 3}; //Initiale Futterposition
+
+int posX = 2, posY = 2;  // Startposition: Mitte (2,2)
+
+void generateNewFood() {
+  //Suche eine neue Position für das Futter
+    do {
+        foodPosition[0] = random(0, 5); // X: 0-4
+        foodPosition[1] = random(0, 5); // Y: 0-4
+    } while (foodPosition[0] == posX && foodPosition[1] == posY); 
+}
+
+// Wandelt (x, y)-Koordinaten in den LED-Index um (Serpentinenverlauf)
+int getLEDIndex(int x, int y) {
+    int originalIndex;
+    if (y % 2 == 0) {
+        originalIndex = y * 5 + x;
+    } else {
+        originalIndex = y * 5 + (4 - x);
+    }
+    return NUM_LEDS - 1 - originalIndex;  // Hier wird das Feld umgedreht
+}
+
+// Setzt eine LED im Buffer auf die gewünschte Farbe
+void setLED(int index, byte red, byte green, byte blue) {
+    if (index < 0 || index >= NUM_LEDS) return;
+    int pos = index * 3;
+    ledBuffer[pos] = red;
+    ledBuffer[pos + 1] = green;
+    ledBuffer[pos + 2] = blue;
+}
+
+// Sendet den gesamten Buffer per SPI an den WS2801
+void showLEDs() {
+    digitalWrite(CLOCK_PIN, LOW);
+    SPI.transfer(ledBuffer,(NUM_LEDS * 3));
+    
+    delay(1);
+}
+
+// Setzt alle LEDs auf Schwarz
+void clearLEDs() {
+    memset(ledBuffer, 0, sizeof(ledBuffer));
+}
+
+// Aktualisiert die LED-Position
+void updateLED() {
+    clearLEDs();
+    
+    //Player LED
+    setLED(getLEDIndex(posX, posY), 255, 255, 255);
+    
+    // Futter-LED (rot)
+    setLED(getLEDIndex(foodPosition[0], foodPosition[1]), 255, 0, 0);
+
+    showLEDs();
+}
+
+
+
+
+void setup() {
+    
+
+    Serial.begin(9600);
+    while (!Serial)
+        ; // Wait for Serial to become available. Is optimized away for some cores.
+        SPI.begin();
+
+    pinMode(DATA_PIN, OUTPUT);
+    pinMode(CLOCK_PIN, OUTPUT);
+
+    irrecv.begin(IR_PIN, ENABLE_LED_FEEDBACK);  // Startet den IR-Empfang
+    
+    randomSeed(analogRead(A0)); // Initialisiert Zufallsgenerator
+    generateNewFood();          // Erstes Futter erzeugen
+
+    updateLED();  // Startposition setzen
+}
+
+void loop() {
+    if(irrecv.decode()) {
+        unsigned long command = irrecv.decodedIRData.decodedRawData;
+        
+        // Richtungsänderung (keine 180° Drehung)
+        if(command == IR_RIGHT && currentDir != LEFT) currentDir = RIGHT;
+        if(command == IR_LEFT && currentDir != RIGHT) currentDir = LEFT;
+        if(command == IR_UP && currentDir != DOWN) currentDir = UP;
+        if(command == IR_DOWN && currentDir != UP) currentDir = DOWN;
+        
+        irrecv.resume();
+    }
+
+    // Bewegung nur bei gültiger Richtung
+    if(currentDir != NONE) {
+        // Neue Kopfposition berechnen
+        int newHeadX = snakeX[0];
+        int newHeadY = snakeY[0];
+        
+        switch(currentDir) {
+            case RIGHT: newHeadX = (newHeadX + 1) % 5; break;
+            case LEFT:  newHeadX = (newHeadX -1 +5) %5; break;
+            case UP:    newHeadY = (newHeadY -1 +5) %5; break;
+            case DOWN:  newHeadY = (newHeadY +1) %5; break;
+        }
+        
+        // Kollisionsprüfung mit eigenem Körper
+        for(int i=1; i<snakeLength; i++) {
+            if(newHeadX == snakeX[i] && newHeadY == snakeY[i]) {
+                gameOver();
+                return;
+            }
+        }
+        
+        // Körper bewegen
+        for(int i=snakeLength; i>0; i--) {
+            snakeX[i] = snakeX[i-1];
+            snakeY[i] = snakeY[i-1];
+        }
+        
+        // Kopf aktualisieren
+        snakeX[0] = newHeadX;
+        snakeY[0] = newHeadY;
+        
+        // Futter gefressen?
+        if(newHeadX == foodPosition[0] && newHeadY == foodPosition[1]) {
+            snakeLength++;
+            generateNewFood();
+        }
+        
+        updateLED();
+        delay(300); // Geschwindigkeit regulieren
+    }
+}

@@ -1,0 +1,136 @@
+#include <SPI.h>
+#include <IRremote.h>
+
+#define DATA_PIN 11  
+#define CLOCK_PIN 13  
+#define NUM_LEDS 25  
+#define IR_PIN 2
+
+IRrecv irrecv(IR_PIN);
+
+// IR-Codes (anpassen)
+#define IR_UP    0xB946FF00
+#define IR_DOWN  0xEA15FF00
+#define IR_LEFT  0xBB44FF00
+#define IR_RIGHT 0xBC43FF00
+
+byte ledBuffer[NUM_LEDS * 3];
+byte foodPosition[2] = {3, 3};
+
+// Snake Variablen
+int snakeX[25] = {2};  // X-Positionen
+int snakeY[25] = {2};  // Y-Positionen
+int snakeLength = 1;
+enum Direction { UP, DOWN, LEFT, RIGHT, NONE };
+Direction currentDir = NONE;
+
+// Wandelt (x,y) in LED-Index um (wie zuvor)
+int getLEDIndex(int x, int y) { /* unverändert */ }
+
+void setLED(int index, byte r, byte g, byte b) { /* unverändert */ }
+void showLEDs() { /* unverändert */ }
+void clearLEDs() { /* unverändert */ }
+
+void generateNewFood() {
+    do {
+        foodPosition[0] = random(0, 5);
+        foodPosition[1] = random(0, 5);
+    } while (isPositionOnSnake(foodPosition[0], foodPosition[1]));
+}
+
+bool isPositionOnSnake(int x, int y) {
+    for(int i=0; i<snakeLength; i++) {
+        if(snakeX[i] == x && snakeY[i] == y) return true;
+    }
+    return false;
+}
+
+void updateLED() {
+    clearLEDs();
+    
+    // Schlange zeichnen (Kopf weiß, Körper grün)
+    for(int i=0; i<snakeLength; i++) {
+        byte r = (i == 0) ? 255 : 0;
+        byte g = 255;
+        byte b = (i == 0) ? 255 : 0;
+        setLED(getLEDIndex(snakeX[i], snakeY[i]), r, g, b);
+    }
+    
+    // Futter (rot)
+    setLED(getLEDIndex(foodPosition[0], foodPosition[1]), 255, 0, 0);
+    
+    showLEDs();
+}
+
+void gameOver() {
+    // Blink-Effekt bei Game Over
+    for(int i=0; i<3; i++) {
+        clearLEDs();
+        showLEDs();
+        delay(500);
+        updateLED();
+        delay(500);
+    }
+    snakeLength = 1;
+    snakeX[0] = 2;
+    snakeY[0] = 2;
+    currentDir = NONE;
+    generateNewFood();
+}
+
+void setup() { /* unverändert */ }
+
+void loop() {
+    if(irrecv.decode()) {
+        unsigned long command = irrecv.decodedIRData.decodedRawData;
+        
+        // Richtungsänderung (keine 180° Drehung)
+        if(command == IR_RIGHT && currentDir != LEFT) currentDir = RIGHT;
+        if(command == IR_LEFT && currentDir != RIGHT) currentDir = LEFT;
+        if(command == IR_UP && currentDir != DOWN) currentDir = UP;
+        if(command == IR_DOWN && currentDir != UP) currentDir = DOWN;
+        
+        irrecv.resume();
+    }
+
+    // Bewegung nur bei gültiger Richtung
+    if(currentDir != NONE) {
+        // Neue Kopfposition berechnen
+        int newHeadX = snakeX[0];
+        int newHeadY = snakeY[0];
+        
+        switch(currentDir) {
+            case RIGHT: newHeadX = (newHeadX + 1) % 5; break;
+            case LEFT:  newHeadX = (newHeadX -1 +5) %5; break;
+            case UP:    newHeadY = (newHeadY -1 +5) %5; break;
+            case DOWN:  newHeadY = (newHeadY +1) %5; break;
+        }
+        
+        // Kollisionsprüfung mit eigenem Körper
+        for(int i=1; i<snakeLength; i++) {
+            if(newHeadX == snakeX[i] && newHeadY == snakeY[i]) {
+                gameOver();
+                return;
+            }
+        }
+        
+        // Körper bewegen
+        for(int i=snakeLength; i>0; i--) {
+            snakeX[i] = snakeX[i-1];
+            snakeY[i] = snakeY[i-1];
+        }
+        
+        // Kopf aktualisieren
+        snakeX[0] = newHeadX;
+        snakeY[0] = newHeadY;
+        
+        // Futter gefressen?
+        if(newHeadX == foodPosition[0] && newHeadY == foodPosition[1]) {
+            snakeLength++;
+            generateNewFood();
+        }
+        
+        updateLED();
+        delay(300); // Geschwindigkeit regulieren
+    }
+}
