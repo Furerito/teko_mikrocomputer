@@ -1,0 +1,28 @@
+
+### MOPS 1.03 für Linux ###
+
+Der MOPS ist ein Python-Programm und benötigt darum eine Python-Installation,
+um ausgeführt zu werden. Dies ist grundsätzlich auf Linuxsystemen kein
+Problem, da Python in den Paketsystemen der Distributionen verfügbar ist
+und der MOPS so konzipiert wurde, dass er ab Python 3.3 ausgeführt werden kann.
+
+Da ich allerdings den echten Quelltext des MOPS nicht frei verfügbar
+machen möchte, liefere ich nur den Python-Bytecode aus. Auch dieser
+benötigt einen Python-Interpreter, der ihn ausführt, allerdings die
+gleiche Python-Version, die für die Erstellung des Bytecodes verwendet
+wurde, und das ist in diesem Fall Python 3.11.
+
+Zum Starten des MOPS über das Terminal in den Ordner mit der Datei mops.pyc
+wechseln und wie folgt aufrufen:
+python3.11 mops.pyc
+
+Ebenfalls möglich (Beispiele):
+python3.11 mops.pyc -size 800x600
+python3.11 mops.pyc beispiel.ass
+python3.11 mops.pyc -size 1200x960 beispiel.ass
+
+Wer den MOPS mit Icon auf dem Desktop haben möchte und kein 
+passendes findet, kann die mitgelieferte Datei mops-icon.png nutzen.
+
+
+Marco Haase        15.09.2024
